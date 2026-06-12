@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>LRoulette</title>
+<link rel="stylesheet" href="style.css"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>"/>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="header-avatar"><span id="header-initial">?</span></div>
+    <div id="header-info">
+      <div id="header-name">Загрузка...</div>
+      <div id="header-balance"><span class="balance-val">—</span> ₽</div>
+    </div>
+    <div id="header-actions">
+      <button id="sound-toggle" class="icon-btn" onclick="toggleSound()" title="Звук">🔊</button>
+      <button class="icon-btn" onclick="loadProfile()" title="Обновить">↻</button>
+    </div>
+  </div>
+
+  <main id="content">
+    <!-- HOME TAB -->
+    <div id="tab-home" class="tab active">
+      <div class="hero-card">
+        <div class="hero-left">
+          <div class="hero-title">LRoulette</div>
+          <div class="hero-sub">Выигрывай вместе с нами</div>
+          <div class="hero-balance-label">ТВОЙ БАЛАНС</div>
+          <div class="hero-balance-val"><span id="home-balance">—</span> ₽</div>
+        </div>
+        <div class="hero-deco">💎</div>
+      </div>
+
+      <div class="section-title">Быстрые действия</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="switchTab('mines')">
+          <div class="quick-icon">💣</div>
+          <div class="quick-label">Мины</div>
+        </div>
+        <div class="quick-card" onclick="switchTab('roulette')">
+          <div class="quick-icon">🎲</div>
+          <div class="quick-label">Рулетка</div>
+        </div>
+        <div class="quick-card" onclick="switchTab('topup')">
+          <div class="quick-icon">💳</div>
+          <div class="quick-label">Пополнить</div>
+        </div>
+        <div class="quick-card" onclick="switchTab('history')">
+          <div class="quick-icon">📜</div>
+          <div class="quick-label">История</div>
+        </div>
+      </div>
+
+      <div class="section-title">Статистика</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="st-total-bet">—</div><div class="stat-lbl">Поставлено</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-total-won">—</div><div class="stat-lbl">Выиграно</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-games">—</div><div class="stat-lbl">Игр</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-players">—</div><div class="stat-lbl">Игроков</div></div>
+      </div>
+    </div>
+
+    <!-- MINES TAB -->
+    <div id="tab-mines" class="tab">
+
+      <!-- SETUP SCREEN -->
+      <div id="mines-setup">
+        <div class="mines-header-card">
+          <div class="mines-header-icon">💣</div>
+          <div class="mines-header-text">
+            <div class="mines-header-title">Мины</div>
+            <div class="mines-header-desc">Открывай ячейки — не задень мину</div>
+          </div>
+        </div>
+
+        <div class="setup-block">
+          <div class="setup-block-title">Количество мин</div>
+          <div class="mine-presets" id="mine-count-grid"></div>
+          <div class="custom-count-row">
+            <span class="custom-count-label">Своё число:</span>
+            <input type="number" id="mine-count-custom" min="1" max="24" placeholder="1–24"/>
+            <span class="custom-count-unit">мин</span>
+          </div>
+        </div>
+
+        <div class="setup-block">
+          <div class="setup-block-title">Ставка</div>
+          <div class="bet-quick-row">
+            <button class="bet-quick" onclick="setBet(10)">10</button>
+            <button class="bet-quick" onclick="setBet(50)">50</button>
+            <button class="bet-quick" onclick="setBet(100)">100</button>
+            <button class="bet-quick" onclick="setBet(250)">250</button>
+            <button class="bet-quick" onclick="setBet(500)">500</button>
+            <button class="bet-quick" onclick="setBetMax()">MAX</button>
+          </div>
+          <div class="input-row">
+            <input type="number" id="mines-bet-input" placeholder="Ставка (1–1000 ₽)" min="1" max="1000"/>
+          </div>
+        </div>
+
+        <div id="mines-mult-preview" class="mult-preview-grid"></div>
+
+        <button class="btn-primary btn-pulse" id="mines-start-btn" onclick="startMines()">
+          🚀 Начать игру
+        </button>
+      </div>
+
+      <!-- GAME SCREEN -->
+      <div id="mines-game" style="display:none">
+        <div class="mines-meta-row">
+          <div class="mines-meta-item">
+            <span class="mines-meta-label">Ставка</span>
+            <span class="mines-meta-val" id="mg-bet">—</span>
+          </div>
+          <div class="mines-meta-item">
+            <span class="mines-meta-label">Мины</span>
+            <span class="mines-meta-val" id="mg-mines">—</span>
+          </div>
+          <div class="mines-meta-item highlight">
+            <span class="mines-meta-label">Множитель</span>
+            <span class="mines-meta-val" id="mg-mult">×1.00</span>
+          </div>
+          <div class="mines-meta-item highlight-green">
+            <span class="mines-meta-label">Выигрыш</span>
+            <span class="mines-meta-val" id="mg-payout">—</span>
+          </div>
+        </div>
+
+        <div class="mines-progress-row">
+          <div class="mines-progress-bar"><div id="mines-progress-fill" class="mines-progress-fill"></div></div>
+          <div class="mines-progress-label" id="mines-progress-label">0 / 0</div>
+        </div>
+
+        <div id="mines-grid"></div>
+
+        <button class="btn-cash" id="mines-cash-btn" onclick="cashoutMines()" disabled>
+          <span class="cash-icon">💰</span>
+          <span>Забрать <span id="cash-val">—</span> ₽</span>
+          <span class="cash-mult" id="cash-mult-label">×1.00</span>
+        </button>
+
+        <div id="mines-result" class="mines-result-card hidden">
+          <div class="mines-result-icon" id="result-icon"></div>
+          <div class="mines-result-title" id="result-title"></div>
+          <div class="mines-result-sub" id="result-sub"></div>
+          <div class="mines-result-actions">
+            <button class="btn-primary" onclick="playAgain()">🔄 Играть снова</button>
+            <button class="btn-secondary" onclick="changeSettings()">⚙️ Сменить настройки</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROULETTE TAB -->
+    <div id="tab-roulette" class="tab">
+      <div class="game-header">
+        <div class="game-icon">🎲</div>
+        <div class="game-title">Рулетка</div>
+        <div class="game-desc">Войди в комнату через бота и испытай удачу</div>
+      </div>
+      <div id="rooms-list" class="rooms-list"></div>
+      <div class="hint-box">
+        <div class="hint-icon">💡</div>
+        <div class="hint-text">Чтобы участвовать в рулетке, перейди в бота и выбери комнату. Здесь ты видишь текущие комнаты в режиме просмотра.</div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="tab">
+      <div class="section-title">История побед</div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- TOPUP TAB -->
+    <div id="tab-topup" class="tab">
+      <div class="game-header">
+        <div class="game-icon">💳</div>
+        <div class="game-title">Пополнение</div>
+        <div class="game-desc">Баланс зачисляется мгновенно</div>
+      </div>
+      <div class="topup-methods">
+        <div class="method-card active" id="method-crypto" onclick="selectMethod('crypto')">
+          <div class="method-icon">₿</div>
+          <div class="method-name">Криптовалюта</div>
+          <div class="method-desc">USDT TRC-20 · без комиссии</div>
+        </div>
+        <div class="method-card" id="method-card" onclick="selectMethod('card')">
+          <div class="method-icon">💳</div>
+          <div class="method-name">Карта / СБП</div>
+          <div class="method-desc">Через поддержку · 5%</div>
+        </div>
+      </div>
+      <div id="topup-crypto" class="topup-section">
+        <div class="rate-row">1 USDT ≈ <strong>90 ₽</strong></div>
+        <div class="setup-block-title">Сумма (в рублях)</div>
+        <div class="bet-quick-row">
+          <button class="bet-quick" onclick="setTopup(500)">500₽</button>
+          <button class="bet-quick" onclick="setTopup(1000)">1000₽</button>
+          <button class="bet-quick" onclick="setTopup(2000)">2000₽</button>
+          <button class="bet-quick" onclick="setTopup(5000)">5000₽</button>
+        </div>
+        <div class="input-row">
+          <input type="number" id="topup-amount" placeholder="Сумма в ₽ (мин. 90)" min="90"/>
+        </div>
+        <div id="topup-usdt-preview" class="mult-preview-grid"></div>
+        <button class="btn-primary" onclick="createTopupInvoice()">🔗 Создать счёт</button>
+      </div>
+      <div id="topup-card" class="topup-section hidden">
+        <div class="hint-box">
+          <div class="hint-icon">📞</div>
+          <div class="hint-text">Пополнение картой осуществляется через поддержку. Нажми кнопку ниже чтобы написать в бот.</div>
+        </div>
+        <button class="btn-primary" onclick="openBot()">✉️ Написать в бот</button>
+      </div>
+    </div>
+  </main>
+
+  <nav id="nav">
+    <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span><span>Главная</span>
+    </button>
+    <button class="nav-btn" data-tab="mines" onclick="switchTab('mines')">
+      <span class="nav-icon">💣</span><span>Мины</span>
+    </button>
+    <button class="nav-btn" data-tab="roulette" onclick="switchTab('roulette')">
+      <span class="nav-icon">🎲</span><span>Рулетка</span>
+    </button>
+    <button class="nav-btn" data-tab="history" onclick="switchTab('history')">
+      <span class="nav-icon">📜</span><span>История</span>
+    </button>
+    <button class="nav-btn" data-tab="topup" onclick="switchTab('topup')">
+      <span class="nav-icon">💳</span><span>Пополнить</span>
+    </button>
+  </nav>
+
+  <div id="toast" class="toast hidden"></div>
+  <div id="loader" class="loader hidden"><div class="spinner"></div></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
